@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Single Page App redirect for GitHub Pages
+      // When a user navigates directly to a route on GitHub Pages, 
+      // the server returns 404. This script redirects to index.html.
+      const segment = 1; // Number of path segments to keep (repo name)
+      const loc = window.location;
+      const pathSegments = loc.pathname.split('/').filter(Boolean);
+      if (pathSegments.length > segment) {
+        const newPath = '/' + pathSegments.slice(0, segment).join('/') + '/';
+        const remaining = pathSegments.slice(segment).join('/');
+        loc.replace(newPath + '?/' + remaining + loc.hash);
+      }
+    </script>
+  </head>
+  <body></body>
+</html>

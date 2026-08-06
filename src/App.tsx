@@ -3,14 +3,18 @@ import Sidebar from './components/Sidebar';
 import BulkSignIn from './components/BulkSignIn';
 import ContestJoin from './components/ContestJoin';
 import type { AuthResult, ModuleTab } from './types';
+import { ENV_CONFIGS } from './constants';
 
 function App() {
   const [activeTab, setActiveTab] = useState<ModuleTab>('bulk-signin');
   const [signInResults, setSignInResults] = useState<AuthResult[]>([]);
+  const [env, setEnv] = useState<'alpha' | 'dev'>('dev');
 
   const handleResultsUpdate = useCallback((results: AuthResult[]) => {
     setSignInResults(results);
   }, []);
+
+  const currentEnvConfig = ENV_CONFIGS[env];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', gap: '0' }}>
@@ -47,21 +51,41 @@ function App() {
                 : 'Bulk Contest Joining & Media Upload'}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '4px 8px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Target Env:</span>
+              <select
+                value={env}
+                onChange={(e) => setEnv(e.target.value as 'alpha' | 'dev')}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  paddingRight: '4px'
+                }}
+              >
+                <option value="dev" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>DEV Environment</option>
+                <option value="alpha" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>ALPHA Environment</option>
+              </select>
+            </div>
             <span className="badge badge-info animate-pulse-slow">
-              Supabase Developer Mode
+              Supabase {env === 'dev' ? 'Dev' : 'Alpha'} Mode
             </span>
-            <span className="badge badge-neutral">v2.0.0</span>
+            <span className="badge badge-neutral">v2.1.0</span>
           </div>
         </header>
 
         {/* Active Module */}
         <div style={{ minHeight: 'calc(100vh - 160px)' }}>
           {activeTab === 'bulk-signin' && (
-            <BulkSignIn onResultsUpdate={handleResultsUpdate} />
+            <BulkSignIn onResultsUpdate={handleResultsUpdate} currentEnvConfig={currentEnvConfig} />
           )}
           {activeTab === 'contest-join' && (
-            <ContestJoin signInResults={signInResults} />
+            <ContestJoin signInResults={signInResults} currentEnvConfig={currentEnvConfig} />
           )}
         </div>
 

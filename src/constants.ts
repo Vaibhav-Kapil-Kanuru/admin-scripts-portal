@@ -102,3 +102,32 @@ export const DEFAULT_USERS = [
 ];
 
 export const DEFAULT_PASSWORD = "Password123!";
+
+export interface EnvConfig {
+  name: string;
+  env: 'alpha' | 'dev';
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  baseUrl: string;
+  storageUrl: string;
+}
+
+export const ENV_CONFIGS: Record<'alpha' | 'dev', EnvConfig> = {
+  alpha: {
+    name: 'LitzChill Alpha',
+    env: 'alpha',
+    supabaseUrl: 'https://czgibkbjvqhsgdsnnnbt.supabase.co',
+    supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6Z2lia2JqdnFoc2dkc25ubmJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE2MDMzODgsImV4cCI6MjA1NzE3OTM4OH0.enftNXKuJBUmvJlGH9ZbHX8OEQrmqF1I0mBUz-hiUis',
+    baseUrl: 'https://czgibkbjvqhsgdsnnnbt.supabase.co/functions/v1',
+    storageUrl: 'https://czgibkbjvqhsgdsnnnbt.supabase.co/storage/v1/object/public/'
+  },
+  dev: {
+    name: 'LitzChill Dev',
+    env: 'dev',
+    supabaseUrl: 'https://fwctuxrqgluswtadvzlq.supabase.co',
+    supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Y3R1eHJxZ2x1c3d0YWR2emxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NTI1NzgsImV4cCI6MjA1NzUyODU3OH0.yL2aF_Iv5LmABwVRPjFDHar4W3PzvUOk1ZKspbQoijc',
+    baseUrl: 'https://fwctuxrqgluswtadvzlq.supabase.co/functions/v1',
+    storageUrl: 'https://fwctuxrqgluswtadvzlq.supabase.co/storage/v1/object/public/'
+  }
+};
+

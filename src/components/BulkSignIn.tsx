@@ -21,6 +21,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { DEFAULT_USERS, DEFAULT_PASSWORD } from '../constants';
+import type { EnvConfig } from '../constants';
 import type { AuthResult, UserCredential } from '../types';
 import {
   downloadFile,
@@ -33,18 +34,19 @@ import {
 
 interface BulkSignInProps {
   onResultsUpdate?: (results: AuthResult[]) => void;
+  currentEnvConfig: EnvConfig;
 }
 
-const BulkSignIn: React.FC<BulkSignInProps> = ({ onResultsUpdate }) => {
+const BulkSignIn: React.FC<BulkSignInProps> = ({ onResultsUpdate, currentEnvConfig }) => {
   const [users, setUsers] = useState<UserCredential[]>(
     DEFAULT_USERS.map((email) => ({ email, password: DEFAULT_PASSWORD }))
   );
   const [customPassword, setCustomPassword] = useState(DEFAULT_PASSWORD);
   const [apiUrl, setApiUrl] = useState(
-    'https://czgibkbjvqhsgdsnnnbt.supabase.co/functions/v1/auth/signin/identity'
+    currentEnvConfig.baseUrl + '/auth/signin/identity'
   );
   const [anonKey, setAnonKey] = useState(
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6Z2lia2JqdnFoc2dkc25ubmJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE2MDMzODgsImV4cCI6MjA1NzE3OTM4OH0.enftNXKuJBUmvJlGH9ZbHX8OEQrmqF1I0mBUz-hiUis'
+    currentEnvConfig.supabaseAnonKey
   );
 
   const [batchSize, setBatchSize] = useState(5);
@@ -92,6 +94,15 @@ const BulkSignIn: React.FC<BulkSignInProps> = ({ onResultsUpdate }) => {
   useEffect(() => {
     onResultsUpdate?.(results);
   }, [results, onResultsUpdate]);
+
+  // Update config when environment changes
+  useEffect(() => {
+    setApiUrl(currentEnvConfig.baseUrl + '/auth/signin/identity');
+    setAnonKey(currentEnvConfig.supabaseAnonKey);
+    handleReset();
+    addLog(`Switched environment config to: ${currentEnvConfig.name}`, 'info');
+  }, [currentEnvConfig]);
+
 
   const addLog = (text: string, type: 'info' | 'success' | 'error' | 'warn' = 'info') => {
     const time = new Date().toLocaleTimeString([], { hour12: false });

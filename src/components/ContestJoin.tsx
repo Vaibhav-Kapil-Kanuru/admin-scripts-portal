@@ -15,14 +15,14 @@ import {
   FileText,
 } from 'lucide-react';
 import type { AuthResult, Contest, ContestJoinResult, SignedInUser } from '../types';
+import type { EnvConfig } from '../constants';
 
 interface ContestJoinProps {
   signInResults: AuthResult[];
+  currentEnvConfig: EnvConfig;
 }
 
-const BASE_URL = 'https://czgibkbjvqhsgdsnnnbt.supabase.co/functions/v1';
-
-const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
+const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults, currentEnvConfig }) => {
   // Step state
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
@@ -53,14 +53,29 @@ const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
   const [logs, setLogs] = useState<Array<{ text: string; type: 'info' | 'success' | 'error' | 'warn'; time: string }>>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
-  useEffect(() => { joinCurrentIndexRef.current = joinCurrentIndex; }, [joinCurrentIndex]);
-  useEffect(() => { logsEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [logs]);
-
   const addLog = useCallback((text: string, type: 'info' | 'success' | 'error' | 'warn' = 'info') => {
     const time = new Date().toLocaleTimeString([], { hour12: false });
     setLogs((prev) => [...prev, { text, type, time }]);
   }, []);
+
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  useEffect(() => { joinCurrentIndexRef.current = joinCurrentIndex; }, [joinCurrentIndex]);
+  useEffect(() => { logsEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [logs]);
+
+  // Reset state when environment changes
+  useEffect(() => {
+    setSelectedContest(null);
+    setContests([]);
+    setContestError('');
+    setJoinResults([]);
+    setIsJoining(false);
+    setIsPaused(false);
+    setJoinCurrentIndex(0);
+    joinCurrentIndexRef.current = 0;
+    setLogs([]);
+    setStep(1);
+    addLog(`Switched contest environment config to: ${currentEnvConfig.name}`, 'info');
+  }, [currentEnvConfig, addLog]);
 
   // Get signed-in users with valid tokens
   const availableUsers: SignedInUser[] = signInResults
@@ -77,7 +92,7 @@ const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
     setContestError('');
     const token = availableUsers[0].accessToken;
     try {
-      const res = await fetch(`${BASE_URL}/contests?status=O`, {
+      const res = await fetch(`${currentEnvConfig.baseUrl}/contests?status=O`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
       const data = await res.json();
@@ -121,6 +136,126 @@ const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== idx));
     setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
   };
+
+  const loadPresetMemes = () => {
+    const newFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    const generateMemeImage = (index: number): Promise<{ file: File; dataUrl: string }> => {
+      return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const grad = ctx.createLinearGradient(0, 0, 600, 400);
+          const hue1 = (index * 18) % 360;
+          const hue2 = ((index * 18) + 120) % 360;
+          grad.addColorStop(0, `hsl(${hue1}, 80%, 40%)`);
+          grad.addColorStop(1, `hsl(${hue2}, 80%, 25%)`);
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 600, 400);
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+          ctx.beginPath();
+          ctx.arc(150, 100, 80, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(450, 300, 120, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.lineWidth = 15;
+          ctx.strokeRect(0, 0, 600, 400);
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 32px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          const topCaptions = [
+            "WHEN THE SCRIPT FINALLY WORKS",
+            "DEV VS PROD BE LIKE",
+            "MOCKING 20 IMAGES LIKE A PRO",
+            "LITZCHILL MEME ARENA",
+            "FASTEST CONTEST JOINER",
+            "SUPABASE IS AWESOME",
+            "VIBRANT APP DESIGN ONLY",
+            "IT WORKS ON MY MACHINE",
+            "CSS GLASSMORPHISM POWER",
+            "COFFEE IN, CODE OUT",
+            "GIT PUSH -F ORIGIN MAIN",
+            "ONE DOES NOT SIMPLY",
+            "REACT RE-RENDERS GO BRRR",
+            "TYPESCRIPT SAVED MY LIFE",
+            "BUG FIXED IN PRODUCTION",
+            "NO MERGE CONFLICTS TODAY",
+            "THE ALGORITHM SELECTED ME",
+            "COMPILING... PLEASE WAIT",
+            "LIGHTNING FAST CONTEST JOIN",
+            "LAST ENTRY WINNER"
+          ];
+
+          const botCaptions = [
+            "Satisfied Developer Noises",
+            "Everything is fine",
+            "No more manual uploads!",
+            "Let the games begin",
+            "20 entries in 1 second",
+            "Scale it up",
+            "Pure premium design",
+            "Now deploy to production",
+            "Looks extremely premium",
+            "Ready for the contest",
+            "Hope nobody notices",
+            "Join the dev contest",
+            "Join the alpha contest",
+            "This is premium content",
+            "Tested and approved",
+            "No QA required",
+            "Admin script does the work",
+            "Vite + TS speed",
+            "Join contest successful",
+            "Done!"
+          ];
+
+          const topText = topCaptions[index % topCaptions.length];
+          const bottomText = botCaptions[index % botCaptions.length];
+
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 8;
+          ctx.fillText(topText, 300, 80);
+          ctx.fillStyle = '#f3f4f6';
+          ctx.font = 'italic 24px sans-serif';
+          ctx.fillText(bottomText, 300, 320);
+
+          ctx.font = 'bold 16px monospace';
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          ctx.fillText(`Preset Meme #${index + 1}`, 300, 200);
+        }
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `preset_meme_${index + 1}.png`, { type: 'image/png' });
+            const dataUrl = canvas.toDataURL('image/png');
+            resolve({ file, dataUrl });
+          }
+        }, 'image/png');
+      });
+    };
+
+    const promises = Array.from({ length: 20 }).map((_, i) => generateMemeImage(i));
+    Promise.all(promises).then((resList) => {
+      resList.forEach((r) => {
+        newFiles.push(r.file);
+        newPreviews.push(r.dataUrl);
+      });
+      setImageFiles((prev) => [...prev, ...newFiles]);
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
+      addLog(`Loaded 20 unique vibrant preset meme images. Total: ${imageFiles.length + 20}`, 'success');
+    });
+  };
+
 
   const toggleUser = (user: SignedInUser) => {
     setSelectedUsers((prev) => {
@@ -199,7 +334,7 @@ const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
           // Step A: Initiate
           setJoinResults((prev) => { const n = [...prev]; n[globalIdx] = { ...n[globalIdx], status: 'INITIATING' }; return n; });
 
-          const initiateRes = await fetch(`${BASE_URL}/contests/${contestId}/join/initiate`, {
+          const initiateRes = await fetch(`${currentEnvConfig.baseUrl}/contests/${contestId}/join/initiate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.accessToken}` },
             body: JSON.stringify({
@@ -248,7 +383,7 @@ const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
 
           if (!tusRes.ok && tusRes.status !== 204) {
             // Fallback: try Supabase storage direct upload
-            const storageUrl = `https://czgibkbjvqhsgdsnnnbt.supabase.co/storage/v1/object/${bucket_name}/${upload_path}`;
+            const storageUrl = `${currentEnvConfig.supabaseUrl}/storage/v1/object/${bucket_name}/${upload_path}`;
             const storageRes = await fetch(storageUrl, {
               method: 'POST',
               headers: {
@@ -269,7 +404,7 @@ const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
           // Step C: Complete
           setJoinResults((prev) => { const n = [...prev]; n[globalIdx] = { ...n[globalIdx], status: 'COMPLETING' }; return n; });
 
-          const completeRes = await fetch(`${BASE_URL}/contests/${contestId}/join/complete`, {
+          const completeRes = await fetch(`${currentEnvConfig.baseUrl}/contests/${contestId}/join/complete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.accessToken}` },
             body: JSON.stringify({
@@ -521,6 +656,29 @@ const ContestJoin: React.FC<ContestJoinProps> = ({ signInResults }) => {
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Images cycle across users sequentially</div>
               </div>
               <input id="contest-image-input" type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: 'none' }} />
+
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={loadPresetMemes}
+                  style={{ fontSize: '0.85rem', padding: '8px 16px', gap: '6px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}
+                >
+                  <Trophy size={14} style={{ color: 'var(--accent-amber)' }} />
+                  Load 20 Preset Meme Images
+                </button>
+                {imageFiles.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => { setImageFiles([]); setImagePreviews([]); addLog('Cleared all selected images', 'info'); }}
+                    style={{ fontSize: '0.85rem', padding: '8px 16px', gap: '6px', color: 'var(--accent-rose)', borderColor: 'rgba(244,63,94,0.2)' }}
+                  >
+                    <Trash2 size={14} />
+                    Clear All
+                  </button>
+                )}
+              </div>
 
               {imagePreviews.length > 0 && (
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>

@@ -52,6 +52,7 @@ const BulkSignIn: React.FC<BulkSignInProps> = ({ onResultsUpdate, currentEnvConf
   const [batchSize, setBatchSize] = useState(5);
   const [delayMs, setDelayMs] = useState(200);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userLimit, setUserLimit] = useState(20);
 
   const [results, setResults] = useState<AuthResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -176,22 +177,24 @@ const BulkSignIn: React.FC<BulkSignInProps> = ({ onResultsUpdate, currentEnvConf
     setIsRunning(true);
     setIsPaused(false);
 
+    const activeUsers = users.slice(0, userLimit);
+
     let currentResults = [...results];
     if (currentIndexRef.current === 0) {
-      currentResults = users.map((u) => ({ email: u.email, status: 'PENDING' as const, timestamp: new Date().toISOString() }));
+      currentResults = activeUsers.map((u) => ({ email: u.email, status: 'PENDING' as const, timestamp: new Date().toISOString() }));
       setResults(currentResults);
-      addLog(`Initiating bulk sign-in sequence for ${users.length} users.`, 'info');
+      addLog(`Initiating bulk sign-in sequence for ${activeUsers.length} users.`, 'info');
       addLog(`Batch size: ${batchSize} | Delay between batches: ${delayMs}ms`, 'info');
     } else {
       addLog(`Resuming bulk sign-in from user #${currentIndexRef.current + 1}.`, 'info');
     }
 
-    const totalUsers = users.length;
+    const totalUsers = activeUsers.length;
     while (currentIndexRef.current < totalUsers) {
       if (isPausedRef.current) { addLog('Execution paused.', 'warn'); setIsRunning(false); return; }
       const start = currentIndexRef.current;
       const end = Math.min(start + batchSize, totalUsers);
-      const currentBatch = users.slice(start, end);
+      const currentBatch = activeUsers.slice(start, end);
       addLog(`Sending batch: users ${start + 1} to ${end}...`, 'info');
 
       setResults((prev) => {
@@ -266,12 +269,13 @@ const BulkSignIn: React.FC<BulkSignInProps> = ({ onResultsUpdate, currentEnvConf
     else { setCopiedToken(text); setTimeout(() => setCopiedToken(null), 1500); }
   };
 
-  const filteredUsers = users.map((user, idx) => ({ ...user, originalIndex: idx })).filter((u) => u.email.toLowerCase().includes(searchTerm.toLowerCase()));
+  const activeUsers = users.slice(0, userLimit);
+  const filteredUsers = activeUsers.map((user, idx) => ({ ...user, originalIndex: idx })).filter((u) => u.email.toLowerCase().includes(searchTerm.toLowerCase()));
   const successCount = results.filter((r) => r.status === 'SUCCESS').length;
   const failedCount = results.filter((r) => r.status === 'FAILED').length;
   const pendingCount = results.filter((r) => r.status === 'PENDING').length;
   const runningCount = results.filter((r) => r.status === 'RUNNING').length;
-  const completionPercentage = users.length > 0 ? Math.round(((successCount + failedCount) / users.length) * 100) : 0;
+  const completionPercentage = activeUsers.length > 0 ? Math.round(((successCount + failedCount) / activeUsers.length) * 100) : 0;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', alignItems: 'start' }}>
@@ -301,9 +305,13 @@ const BulkSignIn: React.FC<BulkSignInProps> = ({ onResultsUpdate, currentEnvConf
             <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Supabase Anon Key</label>
             <input type="password" value={anonKey} onChange={(e) => setAnonKey(e.target.value)} placeholder="eyJhbG..." disabled={isRunning} style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Batch Concurrency Size ({batchSize})</label>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Users Limit ({userLimit})</label>
+              <input type="range" min="1" max={users.length} value={userLimit} onChange={(e) => setUserLimit(Number(e.target.value))} disabled={isRunning} style={{ cursor: 'pointer' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Batch Concurrency ({batchSize})</label>
               <input type="range" min="1" max="20" value={batchSize} onChange={(e) => setBatchSize(Number(e.target.value))} disabled={isRunning} style={{ cursor: 'pointer' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

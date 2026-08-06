@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Upload,
 } from 'lucide-react';
 import type { ModuleTab } from '../types';
 
@@ -25,6 +26,12 @@ const NAV_ITEMS: { key: ModuleTab; label: string; icon: React.ReactNode; descrip
     label: 'Contest Join',
     icon: <Trophy size={20} />,
     description: 'Bulk join ongoing contests',
+  },
+  {
+    key: 'meme-upload',
+    label: 'Meme Upload',
+    icon: <Upload size={20} />,
+    description: 'Bulk upload standard memes & flashes',
   },
 ];
 

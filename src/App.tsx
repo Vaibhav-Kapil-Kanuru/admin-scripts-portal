@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import BulkSignIn from './components/BulkSignIn';
 import ContestJoin from './components/ContestJoin';
+import MemeUpload from './components/MemeUpload';
 import type { AuthResult, ModuleTab } from './types';
 import { ENV_CONFIGS } from './constants';
 
@@ -13,6 +14,11 @@ function App() {
   const handleResultsUpdate = useCallback((results: AuthResult[]) => {
     setSignInResults(results);
   }, []);
+
+  // Clear sign-in results when environment changes to avoid using old tokens
+  useEffect(() => {
+    setSignInResults([]);
+  }, [env]);
 
   const currentEnvConfig = ENV_CONFIGS[env];
 
@@ -48,7 +54,9 @@ function App() {
             >
               {activeTab === 'bulk-signin'
                 ? 'Bulk Account Authentication & Token Generation'
-                : 'Bulk Contest Joining & Media Upload'}
+                : activeTab === 'contest-join'
+                ? 'Bulk Contest Joining & Media Upload'
+                : 'Bulk Standard Meme & Flash Card Upload'}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -86,6 +94,9 @@ function App() {
           )}
           {activeTab === 'contest-join' && (
             <ContestJoin signInResults={signInResults} currentEnvConfig={currentEnvConfig} />
+          )}
+          {activeTab === 'meme-upload' && (
+            <MemeUpload signInResults={signInResults} currentEnvConfig={currentEnvConfig} />
           )}
         </div>
 

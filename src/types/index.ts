@@ -69,4 +69,4 @@ export interface LogEntry {
   time: string;
 }
 
-export type ModuleTab = 'bulk-signin' | 'contest-join';
+export type ModuleTab = 'bulk-signin' | 'contest-join' | 'meme-upload';
